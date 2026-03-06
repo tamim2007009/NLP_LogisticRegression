@@ -1,0 +1,11 @@
+text,label,clean_text
+"I love this phone, battery is amazing",positive,i love phone battery amazing
+Camera is good and performance is smooth,positive,camera good performance smooth
+Fast delivery and nice packaging,positive,fast delivery nice packaging
+"Very bad experience, it hangs a lot",negative,very bad experience hang lot
+Battery drains quickly and heats up,negative,battery drain quickly heat up
+"Worst camera quality, totally disappointed",negative,bad camera quality totally disappointed
+Excellent value for money,positive,excellent value money
+"Not good, screen is dull",negative,not good screen dull
+Great sound and display,positive,great sound display
+"Terrible service, not recommended",negative,terrible service not recommend
