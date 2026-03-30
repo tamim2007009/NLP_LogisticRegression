@@ -304,6 +304,217 @@ Performance metrics & visualizations
 
 ---
 
+## Complete Pipeline Flowchart
+
+```mermaid
+flowchart TD
+    Start([Start]) --> Load["📁 Load sentiment.csv<br/>Raw sentiment data"]
+
+    Load --> Preprocess["🔧 PREPROCESSING<br/>(preprocess.py)<br/>────────────────<br/>1. Convert to lowercase<br/>2. Remove punctuation<br/>3. Remove extra spaces<br/>4. Remove stop words<br/>5. POS tagging<br/>6. Lemmatization"]
+
+    Preprocess --> CleanedData["✅ sentiment_cleaned.csv<br/>Cleaned & normalized text"]
+
+    CleanedData --> Split_Features{{"Feature Extraction"}}
+
+    Split_Features -->|Path 1| BoW["🎒 BAG OF WORDS<br/>(bow.py)<br/>────────────────<br/>CountVectorizer<br/>Word counts per sample"]
+
+    Split_Features -->|Path 2| TFIDF["⚖️ TF-IDF VECTORIZATION<br/>(ifidf.py)<br/>────────────────<br/>TF = word frequency<br/>IDF = document uniqueness<br/>TF-IDF = TF × IDF"]
+
+    BoW --> BoW_Output["📊 BoW Matrix<br/>Shape: samples × vocab_size<br/>Example: [1, 2, 0, 3, ...]"]
+    TFIDF --> TFIDF_Output["📊 TF-IDF Matrix<br/>Shape: samples × vocab_size<br/>Example: [0.5, 0.8, 0, 0.9, ...]"]
+
+    BoW_Output --> Concat["🔗 FEATURE CONCATENATION<br/>(concate.py)<br/>────────────────<br/>Horizontally stack:<br/>BoW features + TF-IDF features"]
+    TFIDF_Output --> Concat
+
+    Concat --> Combined["✅ Combined Features<br/>Shape: samples × vocab_size×2<br/>Example: [BoW values | TF-IDF values]"]
+
+    Combined --> SplitData["✂️ TRAIN-TEST SPLIT<br/>(split.py)<br/>────────────────<br/>80% Training data<br/>20% Testing data<br/>Stratified split"]
+
+    SplitData --> Train_Data["📚 Training Set<br/>80% samples<br/>Features + Labels"]
+    SplitData --> Test_Data["🧪 Test Set<br/>20% samples<br/>Features + Labels"]
+
+    Train_Data --> Train["🤖 MODEL TRAINING<br/>(train_LR.py)<br/>────────────────<br/>Algorithm: Logistic Regression<br/>Input: combined features + labels<br/>Output: trained classifier"]
+    Test_Data --> Train
+
+    Train --> Trained_Model["✅ Trained Model<br/>P(sentiment) = 1/(1+e^-z)<br/>max_iter=300"]
+
+    Trained_Model --> Predict["🎯 PREDICTION<br/>Predict on test set<br/>Output: [0, 1, 1, 0, ...]"]
+
+    Predict --> Pred_Results["🔮 Predictions<br/>Test predictions<br/>Predicted labels"]
+
+    Pred_Results --> Eval["📊 EVALUATION<br/>(eval.py)<br/>────────────────<br/>1. Confusion Matrix<br/>2. Accuracy<br/>3. Precision<br/>4. Recall (Sensitivity)<br/>5. F1-Score<br/>6. ROC-AUC<br/>7. Cohen's Kappa"]
+
+    Test_Data --> Eval
+
+    Eval --> Results["📈 Results<br/>────────────────<br/>Confusion Matrix Heatmap<br/>Classification Report<br/>Performance Metrics<br/>Model Assessment"]
+
+    Results --> End([End: Model Ready for Production])
+
+    style Start fill:#90EE90
+    style End fill:#90EE90
+    style Preprocess fill:#FFB6C1
+    style BoW fill:#87CEEB
+    style TFIDF fill:#87CEEB
+    style Concat fill:#FFD700
+    style SplitData fill:#DDA0DD
+    style Train fill:#FF8C00
+    style Predict fill:#98FB98
+    style Eval fill:#FFE4B5
+    style CleanedData fill:#B0E0E6
+    style Trained_Model fill:#FFDAB9
+    style Results fill:#FFFACD
+```
+
+---
+
+## Preprocessing Pipeline Flowchart
+
+```mermaid
+flowchart TD
+    Start([Text Input]) --> Step1["Step 1: Lowercase Conversion<br/>Input: 'This is AMAZING!'<br/>Output: 'this is amazing!'"]
+
+    Step1 --> Step2["Step 2: Remove Punctuation<br/>Input: 'this is amazing!'<br/>Output: 'this is amazing'"]
+
+    Step2 --> Step3["Step 3: Remove Extra Spaces<br/>Input: 'this  is   amazing'<br/>Output: 'this is amazing'"]
+
+    Step3 --> Step4["Step 4: Tokenization<br/>Input: 'this is amazing'<br/>Output: ['this', 'is', 'amazing']"]
+
+    Step4 --> Step5["Step 5: POS Tagging<br/>Input: ['this', 'is', 'amazing']<br/>Output: [DT, VBZ, JJ]<br/>(Determiner, Verb, Adjective)"]
+
+    Step5 --> Step6["Step 6A: Stop Words Check<br/>'is' → common word?<br/>Yes → Remove"]
+
+    Step6 --> Step7["Step 6B: Lemmatization<br/>Input: ['this', 'amazing']<br/>Output: ['this', 'amaze']"]
+
+    Step7 --> End(["Final Output<br/>['this', 'amaze']"])
+
+    style Start fill:#90EE90
+    style End fill:#90EE90
+    style Step1 fill:#FFE4E1
+    style Step2 fill:#FFE4E1
+    style Step3 fill:#FFE4E1
+    style Step4 fill:#FFE4E1
+    style Step5 fill:#E6F3FF
+    style Step6 fill:#E6F3FF
+    style Step7 fill:#E6F3FF
+```
+
+---
+
+## Feature Extraction Comparison: BoW vs TF-IDF
+
+```mermaid
+flowchart TD
+    Cleaned["Cleaned Text Dataset<br/>['love product', 'hate product', 'amazing product']"]
+
+    Cleaned --> VocabBuild["Build Vocabulary<br/>All unique words<br/>['love', 'product', 'hate', 'amazing']"]
+
+    VocabBuild --> BowPath["BOW PATH"]
+    VocabBuild --> TfidfPath["TF-IDF PATH"]
+
+    BowPath --> BowCount["For each sentence, count word occurrences<br/>Sentence 1: 'love product'<br/>love=1, product=1, hate=0, amazing=0"]
+
+    BowCount --> BowMatrix["Sentence 1 BoW Vector<br/>[1, 1, 0, 0]"]
+
+    TfidfPath --> TfCalc["TF Calculation<br/>TF('love', doc1) = 1/2 = 0.5<br/>TF('product', doc1) = 1/2 = 0.5<br/>TF('hate', doc1) = 0/2 = 0<br/>TF('amazing', doc1) = 0/2 = 0"]
+
+    TfCalc --> IdfCalc["IDF Calculation<br/>IDF('love') = log(3/1) = 1.10<br/>IDF('product') = log(3/3) = 0<br/>IDF('hate') = log(3/1) = 1.10<br/>IDF('amazing') = log(3/1) = 1.10"]
+
+    IdfCalc --> TfidfCalc["TF-IDF = TF × IDF<br/>love: 0.5 × 1.10 = 0.55<br/>product: 0.5 × 0 = 0<br/>hate: 0 × 1.10 = 0<br/>amazing: 0 × 1.10 = 0"]
+
+    TfidfCalc --> TfidfMatrix["Sentence 1 TF-IDF Vector<br/>[0.55, 0, 0, 0]"]
+
+    BowMatrix --> BowFinal["Final BoW Matrix<br/>┌────────────────┐<br/>│1 1 0 0 | Row 1<br/>│1 1 0 0 | Row 2<br/>│0 1 1 0 | Row 3<br/>└────────────────┘"]
+
+    TfidfMatrix --> TfidfFinal["Final TF-IDF Matrix<br/>┌─────────────────────┐<br/>│0.55 0 0 0 | Row 1<br/>│0.55 0 0 0 | Row 2<br/>│0 0 1.10 0 | Row 3<br/>└─────────────────────┘"]
+
+    BowFinal --> Comparison["Comparison<br/>────────────<br/>BoW: Frequent words get high scores<br/>TF-IDF: Unique words get high scores"]
+
+    TfidfFinal --> Comparison
+
+    style Cleaned fill:#E6F3FF
+    style VocabBuild fill:#E6F3FF
+    style BowPath fill:#87CEEB
+    style TfidfPath fill:#FFD700
+    style BowMatrix fill:#87CEEB
+    style TfidfMatrix fill:#FFD700
+    style BowFinal fill:#87CEEB
+    style TfidfFinal fill:#FFD700
+    style Comparison fill:#FFE4E1
+```
+
+---
+
+## Model Training & Evaluation Flowchart
+
+```mermaid
+flowchart TD
+    Start["Combined Features Ready<br/>Shape: samples × features"]
+
+    Start --> Split["Train-Test Split (80-20)<br/>────────────────<br/>random_state=42<br/>stratify=labels"]
+
+    Split --> TrainSet["Training Set (80%)<br/>────────────────<br/>Features: X_train<br/>Labels: y_train"]
+    Split --> TestSet["Test Set (20%)<br/>────────────────<br/>Features: X_test<br/>Labels: y_test"]
+
+    TrainSet --> Init["Initialize Model<br/>LogisticRegression()<br/>max_iter=300<br/>random_state=42"]
+
+    Init --> Fit["Fit Model on Training Data<br/>────────────────<br/>model.fit(X_train, y_train)<br/><br/>Learns weights for each feature<br/>Optimizes parameters<br/>Minimizes loss function"]
+
+    Fit --> Trained["✅ Trained Model<br/>Learned parameters<br/>Ready for prediction"]
+
+    Trained --> Predict["Generate Predictions<br/>────────────────<br/>y_pred = model.predict(X_test)<br/>Output: [0, 1, 1, 0, 1, ...]"]
+
+    TestSet --> Predict
+
+    Predict --> Eval["Comparison<br/>────────────────<br/>y_test vs y_pred<br/>Known    vs  Predicted"]
+
+    Eval --> Metrics["Calculate Metrics<br/>────────────────"]
+
+    Metrics --> Cm["1️⃣ Confusion Matrix<br/>┌────────────────┐<br/>│ TP  | FP │<br/>├────────────────┤<br/>│ FN  | TN │<br/>└────────────────┘"]
+
+    Metrics --> Acc["2️⃣ Accuracy<br/>TP+TN / Total"]
+
+    Metrics --> Prec["3️⃣ Precision<br/>TP / (TP+FP)<br/>Of predicted positive,<br/>how many correct?"]
+
+    Metrics --> Rec["4️⃣ Recall<br/>TP / (TP+FN)<br/>Of actual positive,<br/>how many found?"]
+
+    Metrics --> F1["5️⃣ F1-Score<br/>2 × (Precision × Recall)<br/>/ (Precision + Recall)"]
+
+    Metrics --> Auc["6️⃣ ROC-AUC<br/>Area under ROC curve<br/>0.5-1.0 range"]
+
+    Metrics --> Kappa["7️⃣ Cohen's Kappa<br/>Agreement beyond chance<br/>0-1 range"]
+
+    Cm --> Viz["Visualizations<br/>────────────────<br/>🔥 Confusion Matrix Heatmap<br/>📊 Classification Report"]
+    Acc --> Viz
+    Prec --> Viz
+    Rec --> Viz
+    F1 --> Viz
+    Auc --> Viz
+    Kappa --> Viz
+
+    Viz --> Final["Final Results<br/>────────────────<br/>Model Performance Summary<br/>Ready for deployment"]
+
+    style Start fill:#E6F3FF
+    style TrainSet fill:#90EE90
+    style TestSet fill:#FFB6C1
+    style Init fill:#FFD700
+    style Fit fill:#FF8C00
+    style Trained fill:#98FB98
+    style Predict fill:#98FB98
+    style Eval fill:#FFE4B5
+    style Metrics fill:#FFE4B5
+    style Cm fill:#FFFACD
+    style Acc fill:#FFFACD
+    style Prec fill:#FFFACD
+    style Rec fill:#FFFACD
+    style F1 fill:#FFFACD
+    style Auc fill:#FFFACD
+    style Kappa fill:#FFFACD
+    style Viz fill:#DDA0DD
+    style Final fill:#90EE90
+```
+
+---
+
 ## Key Concepts Explained
 
 ### **Feature Engineering**
